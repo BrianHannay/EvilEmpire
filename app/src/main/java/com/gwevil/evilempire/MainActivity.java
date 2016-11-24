@@ -10,20 +10,25 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
 
     Thread drawingThread;
     private boolean shouldStopDrawing;
     private int width, height;
-    private int origWidth;
+    World w;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         SurfaceView drawingSurface = (SurfaceView) findViewById(R.id.surface);
         drawingSurface.getHolder().addCallback(this);
+        w = new World(this);
     }
 
 
@@ -41,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                         if (canvas != null) {
                             update();
                             clearCanvas(canvas);
-                            doDrawing(canvas);
+                            draw(canvas);
                             holder.unlockCanvasAndPost(canvas);
                         }
                         try {
@@ -66,23 +71,34 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         canvas.drawRect(new Rect(0,0,width, height), painter);
     }
 
+    static ArrayList<Updatable> updated = new ArrayList<>();
+    protected void addUpdatable(Updatable newOne){
+        updated.add(newOne);
+    }
+
+    protected void removeUpdatable(Updatable alreadyAdded){
+        updated.remove(alreadyAdded);
+    }
     private void update() {
-        testx = (testx <= 0? width : testx - 1);
-        testy = (testy <= 0? height: testy - 1);
+        for (Updatable update: updated) {
+            update.update();
+        }
     }
 
-    private void doDrawing(Canvas canvas) {
-        //todo change test to actual drawing script
-        testDrawing(canvas);
+    ArrayList<Drawable> drawn = new ArrayList<>();
+    protected void addDrawable(Drawable newOne){
+        drawn.add(newOne);
     }
 
-    int testx = width, testy = width;
-    private void testDrawing(Canvas canvas) {
-        Paint painter = new Paint();
-        painter.setColor(Color.RED);
-        painter.setStyle(Paint.Style.FILL);
-        canvas.drawRect(new Rect(0,0,testx, testy), painter);
+    protected void removeDrawable(Drawable alreadyAdded){
+        drawn.remove(alreadyAdded);
     }
+    private void draw(Canvas canvas) {
+        for (Drawable draw: drawn) {
+            draw.draw(canvas);
+        }
+    }
+
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
