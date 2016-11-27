@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,18 +18,23 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     Thread drawingThread;
     private boolean shouldStopDrawing;
-    private int width, height;
+    public int width, height;
     World w;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        init(savedInstanceState);
 
+        //load the images into static cache
+        new Images(this.getApplicationContext());
+        SurfaceView drawingSurface = (SurfaceView) findViewById(R.id.surface);
+        drawingSurface.getHolder().addCallback(this);
+        w = new World(this, R.raw.level1);
+    }
+
+    private void init(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SurfaceView drawingSurface = (SurfaceView) findViewById(R.id.surface);
-        drawingSurface.getHolder().addCallback(this);
-        w = new World(this);
     }
 
 
@@ -37,6 +43,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     @Override
     public void surfaceCreated(final SurfaceHolder holder) {
         shouldStopDrawing = false;
+
+        //determine width and height
+        Canvas canvas = holder.lockCanvas();
+        width=canvas.getWidth();
+        height=canvas.getWidth();
+        holder.unlockCanvasAndPost(canvas);
+
         drawingThread = new Thread(new Runnable() {
             @Override
             public void run() {
